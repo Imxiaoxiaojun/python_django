@@ -1,3 +1,4 @@
+# encoding: utf-8 
 """
 Django settings for myvideo project.
 
@@ -73,7 +74,7 @@ LOGGING = {
  'debug': {#记录到日志文件(需要创建对应的目录，否则会出错)
   'level':'DEBUG',
   'class':'logging.handlers.RotatingFileHandler',
-  'filename': '/opt/weblog/qmovie.log',#日志输出文件
+  'filename': '/opt/weblog/movis.log',#日志输出文件
   'maxBytes':1024*1024*5,#文件大小 
   'backupCount': 50,#备份份数
   'formatter':'standard',#使用哪种formatters日志格式
@@ -114,6 +115,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+	'django_crontab',
 	'dytt',
 ]
 
@@ -206,7 +208,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 CRONJOBS = [
-	('21 23 * * *', 'wechat.hytv.gethytvjob'),
-	('06 22 * * *', 'wechat.omtv.getomtvjob'),
-	('40 01 * * *', 'wechat.omtv.getomtvvideojob'),
+	('33 15 * * *', 'dytt.test.testjob','>> /opt/weblog/test.log'),
 ]
