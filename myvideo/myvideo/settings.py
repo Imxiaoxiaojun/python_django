@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 	'django_crontab',
 	'dytt',
+	'cktv',
 ]
 
 MIDDLEWARE = [
@@ -208,5 +209,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 CRONJOBS = [
-	('33 15 * * *', 'dytt.test.testjob','>> /opt/weblog/test.log'),
+	('33 15 * * *', 'dytt.test.testjob','>> /opt/weblog/main.log'),
+	('05 01 * * *', 'dytt.omtv.main','>> /opt/weblog/main.log'),
 ]
