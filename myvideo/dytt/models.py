@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 
 from django.db import models
+import logging
+logger = logging.getLogger('django')
 
 # Create your models here.
 class Video(models.Model):
@@ -18,15 +20,11 @@ class Video(models.Model):
 	class Meta:
 		db_table = 'video'
 		unique_together =('name','url')
-	@classmethod
-	def getcount(self, *args, **kwargs):
-		try:
-			return super(Video,self).objects.filter(*args,**kwargs).count()
-		except Exception,e:
-			return 0
+
 class FailVideo(models.Model):
 	url = models.CharField(max_length=100)
 	type = models.CharField(max_length=20)
+	parentid = models.IntegerField(default=0)
 	class Meta:
 		db_table = 'failvideo'
 		unique_together =('url','type')

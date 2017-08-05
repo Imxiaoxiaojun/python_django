@@ -209,6 +209,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 CRONJOBS = [
-	('33 15 * * *', 'dytt.test.testjob','>> /opt/weblog/main.log'),
-	('05 01 * * *', 'dytt.omtv.main','>> /opt/weblog/main.log'),
+	('06 19 * * *', 'dytt.omtv.startjob','>> /opt/weblog/main.log'),
+	('13 19 * * *', 'dytt.omtv.main','>> /opt/weblog/main.log'),
 ]
