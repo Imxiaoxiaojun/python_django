@@ -1,0 +1,18 @@
+{% load wechatfilters %}
+<html>
+<script>
+function copyArticle(value) {
+	window.clipboardData.setData("Text",value);
+	alert("复制成功！");
+}
+</script>
+<div style="font-size:20px;">
+{% for item in tvlist %}  
+{{ item.name|subvideoname }}
+<br>
+<!--迅雷下载地址:<input type="text" value="{{ item.url }}" onclick="javascript:window.getSelection().getRangeAt(0);"> -->
+迅雷下载地址:<textarea width="300px";height="200px";  onclick="javascript:alert(this.value);">{{item.url}}</textarea>
+<br>
+{% endfor %}  
+</div>
+</html>

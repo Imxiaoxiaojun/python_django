@@ -118,6 +118,7 @@ INSTALLED_APPS = [
 	'django_crontab',
 	'dytt',
 	'cktv',
+	'wechat',
 ]
 
 MIDDLEWARE = [
@@ -145,6 +146,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+			'libraries': { # Adding this section should work around the issue.
+				'wechatfilters' : 'filters.wechatfilters',
+			},
         },
     },
 ]
@@ -210,5 +214,7 @@ STATIC_URL = '/static/'
 
 CRONJOBS = [
 	('06 19 * * *', 'dytt.omtv.startjob','>> /opt/weblog/main.log'),
-	('13 19 * * *', 'dytt.omtv.main','>> /opt/weblog/main.log'),
+	('35 23 * * *', 'dytt.omtv.main','>> /opt/weblog/main.log'),
+	('38 23 * * *', 'dytt.omtv.startvideojob','>> /opt/weblog/main.log'),
+	('19 00 * * *', 'dytt.omtv.startfailvideojob','>> /opt/weblog/main.log'),
 ]
