@@ -1,3 +1,4 @@
+#coding=utf-8
 from bitarray import bitarray
 import mmh3
 
@@ -42,7 +43,6 @@ def main():
     # First insertion of animals into the bloom filter
     for animal in animals:
         bloom.add(animal)
-    print(bloom.__contains__('dog222'))
     print(bloom.__iter__())
     # Membership existence for already inserted animals
     # There should not be any false negatives

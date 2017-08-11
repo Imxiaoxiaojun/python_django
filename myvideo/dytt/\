@@ -13,31 +13,29 @@ def geturllist(url):
         soup = BeautifulSoup(html,'lxml')
         strs = url + '---------' + soup.title.string
         print >> logsfile,strs.encode('utf-8')
-        logsfile.flush()
         #print(url +"------------"+ soup.title.string)
         #save(url,soup.title.string)
         hreflist = soup.find_all('a',href=re.compile("[10,100]"))
         urllist.extend(hreflist)
     except Exception,e:
-        return urllist
+        print >> logsfile,e.message
     return urllist
 
 def foreach(url,num):
     try:
-        num+=1
-        list = geturllist(url)
         if (num  > maxnum):
             return
+        num+=1
+        list = geturllist(url)
         #print(len(list))
-        if (len(list)<=0):
+        if (len(list)<=0 or num-1 == maxnum):
             return
         for i in range(len(list)):
             try:
                 #save(root_url + list[i].get("href"),i)
                 url = list[i].get("href")
                 if url.startswith("ftp://"):
-                    print >> logsfile,url.encode('utf-8')
-                    logsfile.flush()
+                    print >> logsfile,url.encode('urf-8')
                 elif(url.find("http://www.dy2018.com") == -1):
                     url = root_url + list[i].get("href")
                 if not bloom.__contains__(url):
@@ -45,16 +43,14 @@ def foreach(url,num):
                     bloom.add(url)
                     foreach(url,num)
             except Exception,e:
-                continue
-                #print >> logsfile,("foreach error")
+                print >> logsfile,("foreach error")
     except Exception,e:
-        return
-        #print >> logsfile,e.message
+        print >> logsfile,e.message
 
 def save(url,title):
     print(str(title)+"=================="+url)
 if __name__ == '__main__':
-    maxnum = 4 
+    maxnum = 1000
     logsfile = open('./urls.log', 'a+')
     bloom = BloomFilter(160000,1000)
     bloom.add('http://www.dy2018.com/index.html')
