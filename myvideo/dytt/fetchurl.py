@@ -1,32 +1,39 @@
 #coding=utf-8
 import urllib2 
 from bs4 import BeautifulSoup
-class FetchUrl():
-    def geturllist(url):
-        urllist = []
-        try:
-            html = urllib2.urlopen(url).read().decode('GBK')
-            soup = BeautifulSoup(html,'lxml')
-            print(soup.title)
-            hreflist = soup.find_all('a')
-            for str in hreflist:
-                print(str)
-        except:
-            print('error')
-    def foreach(url):
-        try:
-            list = geturllist(url)
-            if (len(list)<=0):
-                return
-            for i in range(len(list)):
-                try:
-                    #插入数据库，成功说明这条url没有爬取过，失败则跳过爬取当前的url
-                    foreach(list.)
-                #TODO
+def geturllist(url):
+    urllist = []
+    try:
+        rep = urllib2.urlopen(url)
+        if(rep.code!=200):
+            return urllist
+        html = rep.read().decode('GBK','ignore')
+        soup = BeautifulSoup(html,'lxml')
+        save(url,soup.title.string)
+        hreflist = soup.find_all('a')
+        urllist.extend(hreflist)
+    except Exception,e:
+        print(e.message)
+    return urllist
 
-                #
-        except:
+def foreach(url,num):
+    if(num>2):
+        return
+    try:
+        num+=1
+        list = geturllist(url)
+        if (len(list)<=0):
+            return
+        for i in range(len(list)):
+            try:
+                foreach(root_url + list[i].get("href"),num)
+            except Exception,e:
+                print ("foreach error")
+    except Exception,e:
+        print(e.message)
 
-    if __name__ == '__main__':
-        root_url = 'http://www.dy2018.com/'
-        geturls('http://www.dy2018.com/')
+def save(url,title):
+    print(url+"----"+title)
+if __name__ == '__main__':
+    root_url = u'http://www.dy2018.com/'
+    foreach(u'http://www.dy2018.com/',1)
