@@ -6,6 +6,10 @@ from BloomFilter import BloomFilter
 def geturllist(url):
     urllist = []
     try:
+        if bloom.__contains__(url):
+            return urllist
+            # print(str(i)+"------num---"+str(num-1)+"---------"+url)
+        bloom.add(url)
         rep = urllib2.urlopen(urllib2.Request(url),timeout=5)
         if(rep.code!=200):
             return urllist
@@ -16,7 +20,7 @@ def geturllist(url):
         logsfile.flush()
         #print(url +"------------"+ soup.title.string)
         #save(url,soup.title.string)
-        hreflist = soup.find_all('a',href=re.compile("[10,100]"))
+        hreflist = soup.find_all('a',href=re.compile('.{3,}'))
         urllist.extend(hreflist)
     except Exception,e:
         return urllist
@@ -24,10 +28,11 @@ def geturllist(url):
 
 def foreach(url,num):
     try:
-        num+=1
-        list = geturllist(url)
-        if (num  > maxnum):
+        if (num >= maxnum):
             return
+        num+=1
+        # idnex 1 2, hytvurl 2,3  tvlurl 3,4
+        list = geturllist(url)
         #print(len(list))
         if (len(list)<=0):
             return
@@ -38,12 +43,11 @@ def foreach(url,num):
                 if url.startswith("ftp://"):
                     print >> logsfile,url.encode('utf-8')
                     logsfile.flush()
+                    num = maxnum
+                    continue
                 elif(url.find("http://www.dy2018.com") == -1):
                     url = root_url + list[i].get("href")
-                if not bloom.__contains__(url):
-                    #print(str(i)+"------num---"+str(num-1)+"---------"+url)
-                    bloom.add(url)
-                    foreach(url,num)
+                foreach(url,num)
             except Exception,e:
                 continue
                 #print >> logsfile,("foreach error")
@@ -57,8 +61,6 @@ if __name__ == '__main__':
     maxnum = 4 
     logsfile = open('./urls.log', 'a+')
     bloom = BloomFilter(160000,1000)
-    bloom.add('http://www.dy2018.com/index.html')
-    bloom.add('http://www.dy2018.com/')
     root_url = 'http://www.dy2018.com'
     foreach('http://www.dy2018.com/index.html',1)
     logsfile.close()
