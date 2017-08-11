@@ -1,39 +1,57 @@
 #coding=utf-8
-import urllib2 
+import urllib2
+import re
 from bs4 import BeautifulSoup
+from BloomFilter import BloomFilter
 def geturllist(url):
     urllist = []
     try:
-        rep = urllib2.urlopen(url)
+        rep = urllib2.urlopen(urllib2.Request(url),timeout=5)
         if(rep.code!=200):
             return urllist
         html = rep.read().decode('GBK','ignore')
         soup = BeautifulSoup(html,'lxml')
-        save(url,soup.title.string)
-        hreflist = soup.find_all('a')
+        #print(url +"------------"+ soup.title.string)
+        #save(url,soup.title.string)
+        hreflist = soup.find_all('a',href=re.compile("[10,100]"))
         urllist.extend(hreflist)
     except Exception,e:
+        print (url)
         print(e.message)
     return urllist
 
 def foreach(url,num):
-    if(num>2):
-        return
     try:
+        if (num  > maxnum):
+            return
         num+=1
         list = geturllist(url)
-        if (len(list)<=0):
+        print(len(list))
+        if (len(list)<=0 or num-1 == maxnum):
             return
         for i in range(len(list)):
             try:
-                foreach(root_url + list[i].get("href"),num)
+                #save(root_url + list[i].get("href"),i)
+                url = list[i].get("href")
+                if url.startswith("ftp://"):
+                    print url
+                elif(url.find("http://www.dy2018.com") == -1):
+                    url = root_url + list[i].get("href")
+                if not bloom.__contains__(url):
+                    #print(str(i)+"------num---"+str(num-1)+"---------"+url)
+                    bloom.add(url)
+                    foreach(url,num)
             except Exception,e:
                 print ("foreach error")
     except Exception,e:
         print(e.message)
 
 def save(url,title):
-    print(url+"----"+title)
+    print(str(title)+"=================="+url)
 if __name__ == '__main__':
-    root_url = u'http://www.dy2018.com/'
-    foreach(u'http://www.dy2018.com/',1)
+    maxnum = 1000
+    bloom = BloomFilter(160000,1000)
+    bloom.add('http://www.dy2018.com/index.html')
+    bloom.add('http://www.dy2018.com/')
+    root_url = 'http://www.dy2018.com'
+    foreach('http://www.dy2018.com/index.html',1)
