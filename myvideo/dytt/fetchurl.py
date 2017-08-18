@@ -1,66 +1,88 @@
-#coding=utf-8
+# -*- coding: utf-8 -*-
 import urllib2
 import re
 from bs4 import BeautifulSoup
 from BloomFilter import BloomFilter
+import threading
 def geturllist(url):
     urllist = []
     try:
         if bloom.__contains__(url):
+            print >> errorlog, str(threading.currentThread().getName()) + '-------' + str(url) + '-----------不能重复爬取'
+            errorlog.flush()
             return urllist
-            # print(str(i)+"------num---"+str(num-1)+"---------"+url)
         bloom.add(url)
-        rep = urllib2.urlopen(urllib2.Request(url),timeout=5)
-        if(rep.code!=200):
+        rep = urllib2.urlopen(urllib2.Request(url), timeout=10)
+        if rep.code != 200:
+            print >> errorlog, str(threading.currentThread().getName()) + '-------' + str(url) + '-----------页面请求响应码错误'
+            errorlog.flush()
             return urllist
-        html = rep.read().decode('GBK','ignore')
-        soup = BeautifulSoup(html,'lxml')
+        html = rep.read().decode('GBK', 'ignore')
+        soup = BeautifulSoup(html, 'lxml')
         strs = url + '---------' + soup.title.string
-        print >> logsfile,strs.encode('utf-8')
-        logsfile.flush()
-        #print(url +"------------"+ soup.title.string)
-        #save(url,soup.title.string)
-        hreflist = soup.find_all('a',href=re.compile('.{3,}'))
-        urllist.extend(hreflist)
-    except Exception,e:
-        return urllist
+        print >> urllog, str(threading.currentThread().getName()) + '-------' + strs.encode('utf-8')
+        urllog.flush()
+        hrefList = soup.find_all('a', href=re.compile('.{3,}'))
+        preList.extend(hrefList)
+        urllist = soup.find_all('a', href=re.compile('ftp://(.*)'))
+    except Exception, e:
+        print >> errorlog, str(threading.currentThread().getName()) + '--' + str(url) + '-geturllist-爬取程序错误' + e.message
+        errorlog.flush()
     return urllist
 
-def foreach(url,num):
+def printFtpurl(list):
     try:
-        if (num >= maxnum):
-            return
-        num+=1
-        # idnex 1 2, hytvurl 2,3  tvlurl 3,4
-        list = geturllist(url)
-        #print(len(list))
-        if (len(list)<=0):
-            return
-        for i in range(len(list)):
-            try:
-                #save(root_url + list[i].get("href"),i)
-                url = list[i].get("href")
-                if url.startswith("ftp://"):
-                    print >> logsfile,url.encode('utf-8')
-                    logsfile.flush()
-                    num = maxnum
+        for url in list:
+            print >> ftplog, str(threading.currentThread().getName()) + '-------' + str(url)
+            ftplog.flush()
+    except Exception, e:
+        print >> errorlog, str(threading.currentThread().getName()) + '----------printFtpurl------爬取程序错误', e.message
+        errorlog.flush()
+
+def getCurNum():
+    global curNum
+    curNum += 1
+    return curNum
+
+def foreach():
+    while len(preList) > 0:
+        try:
+            url = preList.pop(0)
+            if not isinstance(url, basestring):
+                url = url.get('href')
+            if not url.startswith('http://www.dy2018.com'):
+                if url.startswith('http'):
                     continue
-                elif(url.find("http://www.dy2018.com") == -1):
-                    url = root_url + list[i].get("href")
-                foreach(url,num)
-            except Exception,e:
-                continue
-                #print >> logsfile,("foreach error")
-    except Exception,e:
-        return
-        #print >> logsfile,e.message
+                url = root_url + url
+            if url.endswith('/'):
+                url += 'index.html'
+            print >> urllog, str(threading.currentThread().getName()) + '-------开始爬取第' + str(getCurNum()) + '个url'
+            urllog.flush()
+            ftpList = geturllist(url)
+            if len(ftpList) > 0:
+                printFtpurl(ftpList)
+                urllog.flush()
+        except Exception, e:
+            print >> errorlog, str(threading.currentThread().getName()) + '-----foreach-----爬取程序错误' + str(e)
+            errorlog.flush()
+        finally:
+            print >> urllog, str(threading.currentThread().getName()) + '-----------当前待爬取url列表数量为：' + str(len(preList))
+            urllog.flush()
 
 def save(url,title):
     print(str(title)+"=================="+url)
+
 if __name__ == '__main__':
-    maxnum = 4 
-    logsfile = open('./urls.log', 'a+')
-    bloom = BloomFilter(160000,1000)
+    urllog = open('./urls.log', 'a+')
+    errorlog = open('./error.log', 'a+')
+    ftplog = open('./ftps.log', 'a+')
+    preList = []
+    bloom = BloomFilter(160000, 1000)
     root_url = 'http://www.dy2018.com'
-    foreach('http://www.dy2018.com/index.html',1)
-    logsfile.close()
+    curNum = 0
+    geturllist('http://www.dy2018.com/index.html')
+    foreach()
+    urllog.close()
+    errorlog.close()
+    ftplog.close()
+
