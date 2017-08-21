@@ -2,7 +2,7 @@
 import urllib2
 import re
 from bs4 import BeautifulSoup
-# from BloomFilter import BloomFilter
+from pybloom import BloomFilter
 import threading
 import sys
 reload(sys)
@@ -12,12 +12,12 @@ def geturllist(url):
     # timeouttime = 1
     try:
         lock.acquire()
-        if url in passList:
+        if bloom.__contains__(url):
             print >> errorlog, str(threading.currentThread().getName()) + '-------' + str(url) + '-----------不能重复爬取'
             errorlog.flush()
             lock.release()
             return urllist
-        passList.append(url)
+        bloom.add(url)
         lock.release()
         rep = urllib2.urlopen(urllib2.Request(url), timeout=30)
         if rep.code != 200:
@@ -119,14 +119,15 @@ if __name__ == '__main__':
     passlog = open('./passurl.log', 'a+')
     preList = []
     global_pagelist = []
-    # bloom = BloomFilter(1000000, 100000)
+    bloom = BloomFilter(capacity=8000000, error_rate=0.001)
     root_url = 'http://www.ygdy8.net/'
     curNum = 0
     thread_list = []  # 线程存放列表
     lock = threading.RLock()
-    passList = []
+
+    # passList = []
     geturllist('http://www.dy2018.com/index.html')
-    for i in range(10):
+    for i in range(25):
         t = threading.Thread(target=foreach)
         t.setDaemon(True)
         thread_list.append(t)
