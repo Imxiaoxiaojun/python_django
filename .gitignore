@@ -10,6 +10,7 @@ Desktop.ini
 *.egg-info
 *.bak
 *.log
+*.xml
 dist
 build
 # My configurations:

@@ -4,12 +4,15 @@ import re
 from bs4 import BeautifulSoup
 from BloomFilter import BloomFilter
 import threading
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 def geturllist(url):
     urllist = []
     try:
         if bloom.__contains__(url):
-            print >> errorlog, str(threading.currentThread().getName()) + '-------' + str(url) + '-----------不能重复爬取'
-            errorlog.flush()
+            # print >> errorlog, str(threading.currentThread().getName()) + '-------' + str(url) + '-----------不能重复爬取'
+            # errorlog.flush()
             return urllist
         lock.acquire()
         bloom.add(url)
@@ -21,8 +24,7 @@ def geturllist(url):
             return urllist
         html = rep.read().decode('GBK', 'ignore')
         soup = BeautifulSoup(html, 'lxml')
-        strs = url + '---------' + soup.title.string
-        print >> urllog, str(threading.currentThread().getName()) + '-------' + strs.encode('utf-8')
+        print >> urllog, str(threading.currentThread().getName()) + '-------' + url + '---------' + soup.title.string
         urllog.flush()
         hrefList = soup.find_all('a', href=re.compile('.{3,}'))
         lock.acquire()
@@ -30,7 +32,7 @@ def geturllist(url):
         lock.release()
         urllist = soup.find_all('a', href=re.compile('ftp://(.*)'))
     except Exception, e:
-        print >> errorlog, str(threading.currentThread().getName()) + '--' + str(url) + '-geturllist-爬取程序错误' + e.message
+        print >> errorlog, str(threading.currentThread().getName()) + '--' + str(url) + '-geturllist-爬取程序错误', e
         errorlog.flush()
     return urllist
 
@@ -40,7 +42,7 @@ def printFtpurl(list):
             print >> ftplog, str(threading.currentThread().getName()) + '-------' + str(url)
             ftplog.flush()
     except Exception, e:
-        print >> errorlog, str(threading.currentThread().getName()) + '----------printFtpurl------爬取程序错误', e.message
+        print >> errorlog, str(threading.currentThread().getName()) + '----------printFtpurl------爬取程序错误', e
         errorlog.flush()
 
 def getCurNum():

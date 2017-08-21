@@ -13,8 +13,6 @@
 #	except:
 #		logger.error('save error')
 if __name__ == '__main__':
-	print('111')
-	for i in range(0,10):
-		if i == 2:
-			continue
-		print(i)
+	list = []
+	for i in range(len(list)):
+		print list[i]
