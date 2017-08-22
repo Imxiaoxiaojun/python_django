@@ -1,4 +1,5 @@
-# coding=utf-8
+# -*- coding: UTF-8 -*-
+from DBUtil import Mysql
 #import models
 #import logging
 #logger = logging.getLogger('django')
@@ -12,7 +13,17 @@
 #		#models.Video.objects.bulk_create(list)
 #	except:
 #		logger.error('save error')
+
 if __name__ == '__main__':
-	list = []
-	for i in range(len(list)):
-		print list[i]
+	conn = Mysql()
+	limitNum = 0
+	preList = []
+	count = limitNum * 1000
+	sql = "SELECT listurl FROM  python_prelist ORDER by listid LIMIT 1,20 "
+	videos = conn.getAll(sql)
+	if videos:
+		preList.extend(videos)
+	while True:
+		for url in preList:
+			print url.get('listurl')
+		break
