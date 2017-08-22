@@ -32,8 +32,9 @@ def geturllist(url):
         print >> urllog, str(threading.currentThread().getName()) + '-------' + url + '---------' + soup.title.string
         urllog.flush()
         # hrefList = soup.find_all(href=re.compile('.{3,}'))
-        hrefList = re.findall('<a.*?href="(.+)".*?>(.*?)</a>', html)
-        pageList = soup.find_all('option', text=re.compile('[\d]'))
+        hrefList = re.findall('<a.*?href="(.+)".*?>.*?</a>', html)
+        # pageList = soup.find_all('option', text=re.compile('[\d]'))
+        pageList = re.findall('<option.*?value="(.+)">.+[\d]</option', html)
         formatlist(url[0:url.rfind('/')+1], pageList, 'page')
         if not set(global_pagelist) > set(pageList):
             lock.acquire()
