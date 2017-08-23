@@ -86,7 +86,7 @@ def foreach():
                     print >> passlog, str(threading.currentThread().getName()) + '--------跳过该url-------' + url
                     passlog.flush()
                     continue
-                elif url.startswith('http') and url.endswith('.exe'):
+                elif url.startswith('http') and (url.endswith('.exe') or url.endswith('.rar')):
                     print >> ftplog, str(threading.currentThread().getName()) + '-------' + str(url)
                     ftplog.flush()
                 url = root_url + url
