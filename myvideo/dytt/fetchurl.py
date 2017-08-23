@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import urllib2
 import re
-from bs4 import BeautifulSoup
 from pybloom import BloomFilter
 import threading
 import sys
@@ -10,57 +9,46 @@ sys.setdefaultencoding('utf-8')
 
 
 def geturllist(url):
-    urllist = []
     try:
         lock.acquire()
         if bloom.__contains__(url):
             print >> errorlog, str(threading.currentThread().getName()) + '-------' + str(url) + '-----------不能重复爬取'
             errorlog.flush()
             lock.release()
-            return urllist
+            return
         bloom.add(url)
         lock.release()
         rep = urllib2.urlopen(urllib2.Request(url), timeout=30)
         if rep.code != 200:
             print >> errorlog, str(threading.currentThread().getName()) + '-------' + str(url) + '-----------页面请求响应码错误'
             errorlog.flush()
-            return urllist
+            return
         html = rep.read().decode('GBK', 'ignore')
-        soup = BeautifulSoup(html, 'lxml')
-        print >> urllog, str(threading.currentThread().getName()) + '-------' + url + '---------' + soup.title.string
+        titlenmae = re.findall('<title>(.*?)</title>', html)[0]
+        print >> urllog, str(threading.currentThread().getName()) + '-------' + url + '---------' + titlenmae
         urllog.flush()
+        ftplist = re.findall('<a.* href=[\',\"](ftp:.*?)[\',\"].*>.*</a>', html)
+        if len(ftplist) > 0:
+            printFtpurl(ftplist)
+            return
         hrefList = re.findall('<a.* href=[\',\"](.*?)[\',\"].*>.*</a>', html)
-        pageList = re.findall('<option.* value=[\',\"](.*?)[\'\"].*>[\d]+</option>', html)
-        formatlist(url[0:url.rfind('/')+1], pageList, 'page')
         lock.acquire()
-        global global_pagelist
-        if len(pageList) > 0 and not set(global_pagelist) > set(pageList):
-            preList.extend(pageList)
-            global_pagelist = list(set(global_pagelist + pageList))
-        formatlist(url[0:url.rfind("/") + 1], hrefList, 'href')
-        preList.extend(hrefList)
+        formatlist(url[0:url.rfind("/") + 1], hrefList)
+        global preList
+        preList = list(set(preList + hrefList))
         lock.release()
-        urllist = soup.find_all('a', href=re.compile('ftp://(.*)'))
     except Exception, e:
         print >> errorlog, str(threading.currentThread().getName()) + '--' + str(url) + '-geturllist-爬取程序错误', e
         errorlog.flush()
-    return urllist
 
 
-def formatlist(curdomain,list,type):
+def formatlist(curdomain,hreflist):
     try:
-        if len(list) <= 0:
+        if len(hreflist) <= 0:
             return
-        if type == 'href':
-            count = len(list) - 1
-            while count >= 0:
-                if list[count].startswith('list_') or list[count].startswith('ftp://'):
-                    del list[count]
-                count -= 1
-        elif type == 'page':
-            for i in range(len(list)):
-                if list[i].startswith('list_'):
-                    list[i] = curdomain + list[i]
+        for j in range(len(hreflist)):
+            if hreflist[j].startswith('list_'):
+                hreflist[j] = curdomain + hreflist[j]
     except Exception, e:
         print >> errorlog, str(threading.currentThread().getName()) + '-----formatlist错误----', e
         errorlog.flush()
@@ -86,22 +74,25 @@ def getCurNum():
 
 
 def foreach():
-    while True:
+    while len(preList) > 0:
         try:
-            url = geturl()
+            lock.acquire()
+            url = preList.pop(-1)
+            lock.release()
             if None is url:
                 break
             if not url.startswith('http://www.ygdy8.net'):
-                if url.startswith('http') or url.startswith('ftp://'):
+                if (url.startswith('http') and not url.endswith('.exe')) or url.startswith('ftp://'):
                     print >> passlog, str(threading.currentThread().getName()) + '--------跳过该url-------' + url
                     passlog.flush()
                     continue
+                elif url.startswith('http') and url.endswith('.exe'):
+                    print >> ftplog, str(threading.currentThread().getName()) + '-------' + str(url)
+                    ftplog.flush()
                 url = root_url + url
             if url.endswith('/'):
                 url += 'index.html'
-            ftpList = geturllist(url)
-            if len(ftpList) > 0:
-                printFtpurl(ftpList)
+            geturllist(url)
         except Exception, e:
             print >> errorlog, str(threading.currentThread().getName()) + '-----foreach-----爬取程序错误', e
             errorlog.flush()
@@ -110,14 +101,6 @@ def foreach():
             urllog.flush()
 
 
-def geturl():
-    lock.acquire()
-    if len(preList) <= 0:
-        lock.release()
-        return None
-    lock.release()
-    return preList.pop(-1)
-
 if __name__ == '__main__':
     urllog = open('./urls.log', 'a+')
     errorlog = open('./error.log', 'a+')
@@ -125,14 +108,15 @@ if __name__ == '__main__':
     passlog = open('./passurl.log', 'a+')
     preList = []
     global_pagelist = []
-    bloom = BloomFilter(capacity=10000000, error_rate=0.001)
+    bloom = BloomFilter(capacity=10000000, error_rate=0.0001)
     root_url = 'http://www.ygdy8.net/'
     curNum = 0
     thread_list = []  # 线程存放列表
     lock = threading.RLock()
     startNum = 0
-    # passList = []
     geturllist('http://www.dy2018.com/index.html')
+    if len(preList) <= 0:
+        sys.exit()
     for i in range(20):
         t = threading.Thread(target=foreach)
         t.setDaemon(True)
