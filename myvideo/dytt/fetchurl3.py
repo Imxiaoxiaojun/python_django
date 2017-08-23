@@ -32,18 +32,17 @@ def geturllist(url):
         print >> urllog, str(threading.currentThread().getName()) + '-------' + url + '---------' + soup.title.string
         urllog.flush()
         # hrefList = soup.find_all(href=re.compile('.{3,}'))
-        hrefList = re.findall('<a.*?href="(.+)".*?>.*?</a>', html)
+        hrefList = re.findall('<a.* href=[\',\"](.*?)[\',\"].*>.*</a>', html)
         # pageList = soup.find_all('option', text=re.compile('[\d]'))
-        pageList = re.findall('<option.*?value="(.+)">.+[\d]</option', html)
+        pageList = re.findall('<option.* value=[\',\"](.*?)[\'\"].*>[\d]+</option>', html)
         formatlist(url[0:url.rfind('/')+1], pageList, 'page')
-        if not set(global_pagelist) > set(pageList):
-            lock.acquire()
-            preList.extend(pageList)
-            global_pagelist.extend(pageList)
-            lock.release()
-        formatlist(url[0:url.rfind("/") + 1], hrefList, 'href')
         lock.acquire()
-        if len(preList) > 10 and len(hrefList) > 0:
+        global global_pagelist
+        if len(pageList) > 0 and not set(global_pagelist) > set(pageList):
+            preList.extend(pageList)
+            global_pagelist = list(set(global_pagelist + pageList))
+        formatlist(url[0:url.rfind("/") + 1], hrefList, 'href')
+        if len(preList) > 1000000 and len(hrefList) > 0:
             disposeurltodb()
         preList.extend(hrefList)
         lock.release()
@@ -64,13 +63,13 @@ def formatlist(curdomain,list,type):
         if type == 'href':
             count = len(list) - 1
             while count >= 0:
-                if list[count].get('href').startswith('list_') or list[count].get('href').startswith('ftp://'):
+                if list[count].startswith('list_') or list[count].startswith('ftp://'):
                     del list[count]
                 count -= 1
         elif type == 'page':
             for i in range(len(list)):
-                if list[i].get('value').startswith('list_'):
-                    list[i]['value'] = curdomain + list[i].get('value')
+                if list[i].startswith('list_'):
+                    list[i] = curdomain + list[i]
     except Exception, e:
         print >> errorlog, str(threading.currentThread().getName()) + '-----formatlist错误----', e
         errorlog.flush()
@@ -94,15 +93,11 @@ def getCurNum():
 
 
 def foreach():
-    while len(preList) > 0:
+    while True:
         try:
             url = geturl()
             if None is url:
                 break
-            if not isinstance(url, basestring) and None is url.get('value'):
-                url = url.get('href')
-            else:
-                url = url.get('value')
             if not url.startswith('http://www.ygdy8.net'):
                 if url.startswith('http') or url.startswith('ftp://'):
                     print >> passlog, str(threading.currentThread().getName()) + '--------跳过该url-------' + url
@@ -140,13 +135,14 @@ def geturl():
     if len(preList) <= 0:
         sql = "SELECT listurl FROM  python_prelist ORDER  BY id LIMIT " + str(startNum) + ",300000"
         urllist = mysql.getAll(sql)
+        if len(urllist) <= 0:
+            lock.release()
+            return None
         if urllist:
             startNum = len(urllist)
             preList.extend(urllist)
-    if len(preList) <= 0:
-        return None
-    return preList.pop(-1)
     lock.release()
+    return preList.pop(-1)
 
 if __name__ == '__main__':
     urllog = open('./urls.log', 'a+')
@@ -155,7 +151,7 @@ if __name__ == '__main__':
     passlog = open('./passurl.log', 'a+')
     preList = []
     global_pagelist = []
-    bloom = BloomFilter(capacity=8000000, error_rate=0.001)
+    bloom = BloomFilter(capacity=10000000, error_rate=0.001)
     root_url = 'http://www.ygdy8.net/'
     curNum = 0
     thread_list = []  # 线程存放列表
@@ -167,7 +163,7 @@ if __name__ == '__main__':
     startNum = 0
     # passList = []
     geturllist('http://www.dy2018.com/index.html')
-    for i in range(25):
+    for i in range(20):
         t = threading.Thread(target=foreach)
         t.setDaemon(True)
         thread_list.append(t)

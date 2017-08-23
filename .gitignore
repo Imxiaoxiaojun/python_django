@@ -8,8 +8,8 @@ Desktop.ini
 *.so
 *.egg
 *.egg-info
-*.bak
-*.log
+myvideo/dytt/*.bak
+myvideo/dytt/*.log
 *.xml
 dist
 build
