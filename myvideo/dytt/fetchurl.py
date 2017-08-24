@@ -89,6 +89,7 @@ def foreach():
                 elif url.startswith('http') and (url.endswith('.exe') or url.endswith('.rar')):
                     print >> ftplog, str(threading.currentThread().getName()) + '-------' + str(url)
                     ftplog.flush()
+                    continue
                 url = root_url + url
             if url.endswith('/'):
                 url += 'index.html'
