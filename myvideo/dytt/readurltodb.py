@@ -23,8 +23,8 @@ if __name__ == '__main__':
     urllist = list(set(urllist))
 
     for url2 in urllist:
-        vname = url2[url2.rfind('.com]') + 5:] if url2.rfind('.com]') != -1 else url2[url2.rfind('org') + 1:] \
-            if url2.rfind('org') != -1 else url2[url2.rfind('net') + 1:] if url2.rfind('net') != -1 \
+        vname = url2[url2.rfind('.com]') + 5:] if url2.rfind('.com]') != -1 else url2[url2.rfind('.org]') + 5:] \
+            if url2.rfind('.org]') != -1 else url2[url2.rfind('.net]') + 5:] if url2.rfind('net]') != -1 \
             else url2[url2.rfind('/') + 1:] if url2.rfind('/') != -1 else ''
         if str(vname)[0] == '.':
             vname = vname[1:]
