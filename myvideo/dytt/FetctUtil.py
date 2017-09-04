@@ -42,15 +42,26 @@ class FetchUtil(object):
         if resp.code != 200:
             return url_list
         html = resp.read().decode("utf-8", "ignore")
-        url_list.extend(re.findall('<a.* href=[\',\"](.*?)[\',\"].*>.*</a>', html))
+        soup = BeautifulSoup(html, "lxml")
+        url_list.extend(soup.find_all("a"))
+        # url_list.extend(re.findall('<a.* href="(.*?)".*>.*</a>', html))
+        # hrefList = re.findall('<a.*?href="(.+)".*?>.*?</a>', html)
         return url_list
 
-    @staticmethod
-    def url_format(url):
-        if str(url).endswith("/"):
+    def url_format(self, url):
+        if url.get("href"):
+            url = url.get("href")
+        if url in filter_list or url in self.graph.readyList:
+            return None
+        elif str(url).startswith("http") and not str(url).startswith(self.domain):
+            return None
+        elif str(url).endswith("/"):
             url += "index.jsp"
         elif str(url).startswith("/"):
-
+            url = self.domain + url
+        else:
+            return None
+        return url
 
     def start_fetch(self, root_url):
         self.graph.add_node([root_url])
@@ -58,12 +69,13 @@ class FetchUtil(object):
         while len(self.graph.readyList) > 0:
             url = self.graph.get_node()
             if cur_depth <= self.graph.max_dept:
+                print >> url_log, "深度-------", cur_depth, "url-------"+url
+                url_log.flush()
                 url_list = self.get_url_list(url)
                 self.graph.depth_size[cur_depth] = len(self.graph.readyList)
-                self.graph.add_node(list(set(url_list)), filter_list, self.url_format)
+                self.graph.add_node(list(set(url_list)), self.url_format)
                 cur_depth += 1
             keys = self.graph.depth_size.keys()
-            self.graph.depth_size.v
             for key in keys:
                 if self.graph.depth_size[key] == len(self.graph.readyList):
                     cur_depth = key
@@ -71,9 +83,11 @@ class FetchUtil(object):
 
 
 if __name__ == "__main__":
+    url_log = open('./urls.log', 'a+')
     fetch = FetchUtil('http://www.tjgp.gov.cn/', 4)
     filter_list = ["http://www.tjgp.gov.cn/index.jsp", "http://www.tjgp.gov.cn/", "/", "#", "/index.jsp"]
     fetch.start_fetch('http://www.tjgp.gov.cn/index.jsp')
+    url_log.close()
     # domain = 'http://www.watchmen.cn/'
     # fetchUtil = FetchUtil('http://www.watchmen.cn/information/', 'E:\zhuyajun\py_img\watchmen\\')
     # fetchUtil.download_img('.jpg', fetchUtil.get_image())
