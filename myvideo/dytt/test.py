@@ -1,29 +1,25 @@
 # -*- coding: UTF-8 -*-
-from DBUtil import Mysql
-#import models
-#import logging
-#logger = logging.getLogger('django')
-#def testjob():
-#	list = []
-#	logger.info('start job')
-#	list.append(models.Video(name=u'2010主打美剧《超感警探 第三季》更新第23-24集[中英双字]',url='/html/tv/oumeitv/20100924/28361.html',type='tv',tag='omtv'))
-#	savevideo(list)	
-#def savevideo(list):
-#	try:
-#		#models.Video.objects.bulk_create(list)
-#	except:
-#		logger.error('save error')
+import urllib2
+from bs4 import BeautifulSoup
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
-if __name__ == '__main__':
-	conn = Mysql()
-	limitNum = 0
-	preList = []
-	count = limitNum * 1000
-	sql = "SELECT listurl FROM  python_prelist ORDER by listid LIMIT 1,20 "
-	videos = conn.getAll(sql)
-	if videos:
-		preList.extend(videos)
-	while True:
-		for url in preList:
-			print url.get('listurl')
-		break
+
+# 由于tkinter中没有ToolTip功能，所以自定义这个功能如下
+class Test(object):
+    def __init__(self):
+        pass
+
+    def fetch(self, url):
+        resp = urllib2.urlopen(urllib2.Request(url))
+        if resp.code != 200:
+            print "return code error"
+
+        html = resp.read().decode("UTF-8", "ignore")
+        soup = BeautifulSoup(html, "lxml")
+        print soup
+
+if __name__ == "__main__":
+    test = Test()
+    test.fetch("http://www.tjgp.gov.cn/portal/documentView.do?method=view&id=54793001&ver=2")

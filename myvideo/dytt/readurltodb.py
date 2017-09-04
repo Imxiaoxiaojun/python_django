@@ -35,9 +35,9 @@ if __name__ == '__main__':
     #     if len(videoList[i]) > 200:
     #         print videoList[i]
     mysql = Mysql()
-    sql = "insert into ftplink (ftp_name,ftp_url) values(%s,%s)"
-    count = mysql.insertMany(sql, videoList)
-    if count == len(urllist):
-        mysql.end('commit')
-    else:
-        mysql.end('rollback')
+    # sql = "insert into ftplink (ftp_name,ftp_url) values(%s,%s)"
+    # count = mysql.insertMany(sql, videoList)
+    # if count == len(urllist):
+    #     mysql.end('commit')
+    # else:
+    #     mysql.end('rollback')
