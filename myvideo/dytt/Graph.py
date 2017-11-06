@@ -20,6 +20,8 @@ class Graph(object):
     def get_node(self):
         if len(self.readyList) > 0:
             return self.readyList.pop(-1)
+        else:
+            return None
 
 if __name__ == '__main__':
     g = Graph()

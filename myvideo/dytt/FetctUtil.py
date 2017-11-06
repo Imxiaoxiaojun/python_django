@@ -1,9 +1,12 @@
 # -*- coding:utf-8 -*-
 import urllib2
-import re
+from pybloom import BloomFilter
 from bs4 import BeautifulSoup
 import os
 from Graph import Graph
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 class FetchUtil(object):
@@ -18,7 +21,7 @@ class FetchUtil(object):
     @staticmethod
     def get_image(url):
         image_list = []
-        rep = urllib2.urlopen(urllib2.Request(url))
+        rep = urllib2.urlopen(urllib2.Request(url), timeout=30)
         if rep.code != 200:
             return image_list
         html = rep.read().decode('utf-8', 'ignore')
@@ -38,14 +41,18 @@ class FetchUtil(object):
     @staticmethod
     def get_url_list(url):
         url_list = []
-        resp = urllib2.urlopen(urllib2.Request(url))
-        if resp.code != 200:
-            return url_list
-        html = resp.read().decode("utf-8", "ignore")
-        soup = BeautifulSoup(html, "lxml")
-        url_list.extend(soup.find_all("a"))
-        # url_list.extend(re.findall('<a.* href="(.*?)".*>.*</a>', html))
-        # hrefList = re.findall('<a.*?href="(.+)".*?>.*?</a>', html)
+        try:
+            if bloom.__contains__(url):
+                return url_list
+            bloom.add(url)
+            resp = urllib2.urlopen(urllib2.Request(url))
+            if resp.code != 200:
+                return url_list
+            html = resp.read().decode("utf-8", "ignore")
+            soup = BeautifulSoup(html, "lxml")
+            url_list.extend(soup.find_all("a"))
+        except Exception, e:
+            print url, e
         return url_list
 
     def url_format(self, url):
@@ -56,9 +63,11 @@ class FetchUtil(object):
         elif str(url).startswith("http") and not str(url).startswith(self.domain):
             return None
         elif str(url).endswith("/"):
-            url += "index.jsp"
+            url += u_main_page
         elif str(url).startswith("/"):
             url = self.domain + url
+        elif str(url).startswith("?"):
+            url = self.domain + "/portal/topicView.do" + url
         else:
             return None
         return url
@@ -66,8 +75,12 @@ class FetchUtil(object):
     def start_fetch(self, root_url):
         self.graph.add_node([root_url])
         cur_depth = 1
+        print "fetching。。。"
         while len(self.graph.readyList) > 0:
             url = self.graph.get_node()
+            print "Number of queues to fetch：", len(self.graph.readyList)
+            if url is None:
+                continue
             if cur_depth <= self.graph.max_dept:
                 print >> url_log, "深度-------", cur_depth, "url-------"+url
                 url_log.flush()
@@ -84,15 +97,22 @@ class FetchUtil(object):
 
 if __name__ == "__main__":
     url_log = open('./urls.log', 'a+')
-    fetch = FetchUtil('http://www.tjgp.gov.cn/', 4)
-    filter_list = ["http://www.tjgp.gov.cn/index.jsp", "http://www.tjgp.gov.cn/", "/", "#", "/index.jsp"]
-    fetch.start_fetch('http://www.tjgp.gov.cn/index.jsp')
+    bloom = BloomFilter(capacity=10000000, error_rate=0.0001)
+    try:
+        u_domain = input("please input domain(\"http://www.tjgp.gov.cn/\"):\n")
+        while str(u_domain).strip() == "":
+            u_domain = input()
+        u_main_page = input("please input index page（\"/index.jsp\"） \n")
+        while str(u_main_page).strip() == "":
+            u_main_page = input()
+    except Exception, e:
+        print e
+    fetch = FetchUtil(u_domain, 4)
+    filter_list = [u_domain, "/", "#", u_main_page]
+    fetch.start_fetch(u_domain)
     url_log.close()
-    # domain = 'http://www.watchmen.cn/'
-    # fetchUtil = FetchUtil('http://www.watchmen.cn/information/', 'E:\zhuyajun\py_img\watchmen\\')
-    # fetchUtil.download_img('.jpg', fetchUtil.get_image())
-    # root_url = "http://www.tjgp.gov.cn/"
-    # util = FetchUtil(root_url, None)
+    print "complete!"
+
 
 
 
